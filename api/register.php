@@ -22,11 +22,11 @@ $timestamp = date('Y-m-d H:i:s');
 if (isset($obj->search_text)) {
     // <<<<<<<<<<===================== LIST REGISTRATIONS =====================>>>>>>>>>>
     $search_text = $obj->search_text;
-    $sql = "SELECT `id`, `reg_id`, `name`, `phone_number`, `alternate_phone_number`, `address`, `create_at`, `delete_at` 
+    $sql = "SELECT `id`, `reg_id`, `name`, `phone_number`, `alternate_phone_number`, `address`, `choose_plans`, `create_at`, `delete_at` 
             FROM `registration` 
             WHERE `delete_at` = 0 AND (`name` LIKE '%$search_text%' OR `phone_number` LIKE '%$search_text%') 
             ORDER BY `id` DESC";
-    
+
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
         $output["head"]["code"] = 200;
@@ -41,7 +41,6 @@ if (isset($obj->search_text)) {
         $output["head"]["msg"] = "No Registrations Found";
         $output["body"]["registration"] = [];
     }
-
 } else if (isset($obj->name) && isset($obj->reg_id) && isset($obj->phone_number)) {
     // <<<<<<<<<<===================== CREATE AND EDIT (No Role) =====================>>>>>>>>>>
     $name = $obj->name;
@@ -49,6 +48,7 @@ if (isset($obj->search_text)) {
     $phone_number = $obj->phone_number;
     $alt_phone = isset($obj->alternate_phone_number) ? $obj->alternate_phone_number : '';
     $address = isset($obj->address) ? $obj->address : '';
+    $choose_plans = isset($obj->choose_plans) ? $obj->choose_plans : ''; // Added for plans
 
     if (!empty($name) && !empty($reg_id) && !empty($phone_number)) {
         if (numericCheck($phone_number) && strlen($phone_number) >= 10) {
@@ -61,7 +61,8 @@ if (isset($obj->search_text)) {
                               `reg_id`='$reg_id', 
                               `phone_number`='$phone_number', 
                               `alternate_phone_number`='$alt_phone', 
-                              `address`='$address' 
+                              `address`='$address',
+                              `choose_plans`='$choose_plans'
                               WHERE `id`='$edit_id'";
 
                 if ($conn->query($updateSql)) {
@@ -75,8 +76,8 @@ if (isset($obj->search_text)) {
                 // CREATE Logic (ID is auto-incremented by DB)
                 $check = $conn->query("SELECT `id` FROM `registration` WHERE `reg_id`='$reg_id' AND `delete_at` = 0");
                 if ($check->num_rows == 0) {
-                    $createSql = "INSERT INTO `registration` (`reg_id`, `name`, `phone_number`, `alternate_phone_number`, `address`, `create_at`, `delete_at`) 
-                                  VALUES ('$reg_id', '$name', '$phone_number', '$alt_phone', '$address', '$timestamp', 0)";
+                    $createSql = "INSERT INTO `registration` (`reg_id`, `name`, `phone_number`, `alternate_phone_number`, `address`, `choose_plans`, `create_at`, `delete_at`) 
+                                  VALUES ('$reg_id', '$name', '$phone_number', '$alt_phone', '$address', '$choose_plans', '$timestamp', 0)";
 
                     if ($conn->query($createSql)) {
                         $output["head"]["code"] = 200;
@@ -99,7 +100,6 @@ if (isset($obj->search_text)) {
         $output["head"]["code"] = 400;
         $output["head"]["msg"] = "Please fill all required fields.";
     }
-
 } else if (isset($obj->delete_id)) {
     // SOFT DELETE
     $delete_id = $obj->delete_id;
